@@ -17,30 +17,30 @@ export const AppHeaderUI: FC<TAppHeaderUIProps> = ({ userName }) => (
           to='/'
           end
           className={({ isActive }) =>
-            `text text_type_main-default ml-2 mr-10 ${
-              isActive ? '' : 'text_color_inactive'
-            }`
+            `${styles.link} mr-10 ${isActive ? styles.link_active : ''}`
           }
         >
           {({ isActive }) => (
             <>
               <BurgerIcon type={isActive ? 'primary' : 'secondary'} />
-              <span className='ml-2'>Конструктор</span>
+              <span className='ml-2 text text_type_main-default'>
+                Конструктор
+              </span>
             </>
           )}
         </NavLink>
         <NavLink
           to='/feed'
           className={({ isActive }) =>
-            `text text_type_main-default ml-2 ${
-              isActive ? '' : 'text_color_inactive'
-            }`
+            `${styles.link} ${isActive ? styles.link_active : ''}`
           }
         >
           {({ isActive }) => (
             <>
               <ListIcon type={isActive ? 'primary' : 'secondary'} />
-              <span className='ml-2'>Лента заказов</span>
+              <span className='ml-2 text text_type_main-default'>
+                Лента заказов
+              </span>
             </>
           )}
         </NavLink>
@@ -54,15 +54,15 @@ export const AppHeaderUI: FC<TAppHeaderUIProps> = ({ userName }) => (
         <NavLink
           to='/profile'
           className={({ isActive }) =>
-            `text text_type_main-default ml-2 ${
-              isActive ? '' : 'text_color_inactive'
-            }`
+            `${styles.link} ${isActive ? styles.link_active : ''}`
           }
         >
           {({ isActive }) => (
             <>
               <ProfileIcon type={isActive ? 'primary' : 'secondary'} />
-              <span className='ml-2'>{userName || 'Личный кабинет'}</span>
+              <span className='ml-2 text text_type_main-default'>
+                {userName || 'Личный кабинет'}
+              </span>
             </>
           )}
         </NavLink>
