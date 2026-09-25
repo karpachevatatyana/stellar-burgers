@@ -1,23 +1,26 @@
-import { FC, useMemo } from 'react';
+import { FC, useEffect, useMemo } from 'react';
+import { useParams } from 'react-router-dom';
 import { Preloader } from '../ui/preloader';
 import { OrderInfoUI } from '../ui/order-info';
 import { TIngredient } from '@utils-types';
+import { useAppDispatch, useAppSelector } from '../../services/hooks';
+import { selectIngredients } from '../../services/selectors/ingredients-selectors';
+import { selectOrderByNumber } from '../../services/selectors/order-selectors';
+import { fetchOrderByNumber } from '../../services/slices/order-slice';
 
 export const OrderInfo: FC = () => {
-  /** TODO: взять переменные orderData и ingredients из стора */
-  const orderData = {
-    createdAt: '',
-    ingredients: [],
-    _id: '',
-    status: '',
-    name: '',
-    updatedAt: 'string',
-    number: 0
-  };
+  const { number } = useParams<{ number: string }>();
+  const dispatch = useAppDispatch();
 
-  const ingredients: TIngredient[] = [];
+  const orderData = useAppSelector(selectOrderByNumber);
+  const ingredients: TIngredient[] = useAppSelector(selectIngredients);
 
-  /* Готовим данные для отображения */
+  useEffect(() => {
+    if (number) {
+      dispatch(fetchOrderByNumber(Number(number)));
+    }
+  }, [dispatch, number]);
+
   const orderInfo = useMemo(() => {
     if (!orderData || !ingredients.length) return null;
 
@@ -32,15 +35,11 @@ export const OrderInfo: FC = () => {
         if (!acc[item]) {
           const ingredient = ingredients.find((ing) => ing._id === item);
           if (ingredient) {
-            acc[item] = {
-              ...ingredient,
-              count: 1
-            };
+            acc[item] = { ...ingredient, count: 1 };
           }
         } else {
           acc[item].count++;
         }
-
         return acc;
       },
       {}
@@ -51,12 +50,7 @@ export const OrderInfo: FC = () => {
       0
     );
 
-    return {
-      ...orderData,
-      ingredientsInfo,
-      date,
-      total
-    };
+    return { ...orderData, ingredientsInfo, date, total };
   }, [orderData, ingredients]);
 
   if (!orderInfo) {
