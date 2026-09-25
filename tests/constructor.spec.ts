@@ -49,19 +49,22 @@ test.describe('Конструктор бургера', () => {
   });
 
   test('должен добавить ингредиенты в конструктор', async ({ page }) => {
-    const constructor = page
+    const constructorSection = page
       .locator('section')
       .filter({ hasText: 'Оформить заказ' });
 
     // Изначально конструктор пуст
-    await expect(constructor.getByText('Выберите булки').first()).toBeVisible();
-    await expect(constructor.getByText('Выберите начинку')).toBeVisible();
+    await expect(
+      constructorSection.getByText('Выберите булки').first()
+    ).toBeVisible();
+    await expect(
+      constructorSection.getByText('Выберите начинку')
+    ).toBeVisible();
 
     // Добавляем булку
     const bunCard = page.getByTestId(`ingredient-${BUN_ID}`);
     const bunAddButton = bunCard.getByRole('button', { name: 'Добавить' });
 
-    // Явно ждём, что кнопка видима и активна (важно для Firefox)
     await expect(bunAddButton).toBeVisible();
     await expect(bunAddButton).toBeEnabled();
     await bunAddButton.scrollIntoViewIfNeeded();
@@ -69,10 +72,10 @@ test.describe('Конструктор бургера', () => {
 
     // Дожидаемся, что булка появилась в конструкторе
     await expect(
-      constructor.getByText('Краторная булка N-200i (верх)')
+      constructorSection.getByText('Краторная булка N-200i (верх)')
     ).toBeVisible({ timeout: 10000 });
     await expect(
-      constructor.getByText('Краторная булка N-200i (низ)')
+      constructorSection.getByText('Краторная булка N-200i (низ)')
     ).toBeVisible({ timeout: 10000 });
 
     // Добавляем начинку
@@ -86,44 +89,56 @@ test.describe('Конструктор бургера', () => {
 
     // Дожидаемся, что начинка появилась
     await expect(
-      constructor.getByText('Биокотлета из марсианской Магнолии')
+      constructorSection.getByText('Биокотлета из марсианской Магнолии')
     ).toBeVisible({ timeout: 10000 });
 
     // Проверяем счётчики на карточках
-    await expect(bunCard.locator('.counter__num')).toHaveText('2');
-    await expect(mainCard.locator('.counter__num')).toHaveText('1');
+    await expect(bunCard.getByTestId('ingredient-counter')).toHaveText('2');
+    await expect(mainCard.getByTestId('ingredient-counter')).toHaveText('1');
   });
 
   test('должен открыть и закрыть модалку ингредиента по крестику', async ({
     page
   }) => {
-    const bunCard = page.getByTestId(`ingredient-${BUN_ID}`);
-    await bunCard.locator('a').click();
+    const modal = page.getByTestId('modal');
+
+    // До клика модалки нет
+    await expect(modal).not.toBeVisible();
+
+    // Открываем модалку по начинке (не по первому ингредиенту в списке!)
+    const mainCard = page.getByTestId(`ingredient-${MAIN_ID}`);
+    await mainCard.locator('a').click();
 
     // Проверяем, что модалка открылась
-    const modal = page.getByTestId('modal');
     await expect(modal).toBeVisible();
 
-    // Проверяем данные именно этого ингредиента
-    await expect(modal.getByText('Краторная булка N-200i')).toBeVisible();
-    await expect(modal.getByText('80')).toBeVisible(); // белки
-    await expect(modal.getByText('420')).toBeVisible(); // калории
+    // Проверяем, что в модалке именно начинка, а не булка
+    await expect(
+      modal.getByText('Биокотлета из марсианской Магнолии')
+    ).toBeVisible();
+    await expect(modal.getByText('420')).toBeVisible(); // белки начинки
+    await expect(modal.getByText('4242')).toBeVisible(); // калории начинки
 
     // Проверяем URL
-    await expect(page).toHaveURL(new RegExp(`/ingredients/${BUN_ID}`));
+    await expect(page).toHaveURL(new RegExp(`/ingredients/${MAIN_ID}`));
 
     // Закрываем по крестику
-    await page.getByTestId('modal-close').click();
+    await modal.getByTestId('modal-close').click();
     await expect(modal).not.toBeVisible();
   });
 
   test('должен закрыть модалку ингредиента по клику на оверлей', async ({
     page
   }) => {
-    const bunCard = page.getByTestId(`ingredient-${BUN_ID}`);
-    await bunCard.locator('a').click();
-
     const modal = page.getByTestId('modal');
+
+    // До клика модалки нет
+    await expect(modal).not.toBeVisible();
+
+    // Открываем модалку по начинке
+    const mainCard = page.getByTestId(`ingredient-${MAIN_ID}`);
+    await mainCard.locator('a').click();
+
     await expect(modal).toBeVisible();
 
     // Клик по оверлею — в левый верхний угол, подальше от модалки
@@ -137,7 +152,7 @@ test.describe('Конструктор бургера', () => {
     await setAuthTokens(page);
     await page.reload();
 
-    const constructor = page
+    const constructorSection = page
       .locator('section')
       .filter({ hasText: 'Оформить заказ' });
 
@@ -151,7 +166,7 @@ test.describe('Конструктор бургера', () => {
     await bunAddButton.click();
 
     await expect(
-      constructor.getByText('Краторная булка N-200i (верх)')
+      constructorSection.getByText('Краторная булка N-200i (верх)')
     ).toBeVisible({ timeout: 10000 });
 
     // Собираем бургер: начинка
@@ -164,26 +179,35 @@ test.describe('Конструктор бургера', () => {
     await mainAddButton.click();
 
     await expect(
-      constructor.getByText('Биокотлета из марсианской Магнолии')
+      constructorSection.getByText('Биокотлета из марсианской Магнолии')
     ).toBeVisible({ timeout: 10000 });
 
     // Оформляем заказ
     const orderButton = page.getByRole('button', { name: 'Оформить заказ' });
     await expect(orderButton).toBeVisible();
     await expect(orderButton).toBeEnabled();
+
+    // До клика модалки с заказом нет
+    const modal = page.getByTestId('modal');
+    await expect(modal).toHaveCount(0);
+
     await orderButton.click();
 
     // Проверяем, что модалка с номером заказа открылась
-    const modal = page.getByTestId('modal');
     await expect(modal).toBeVisible();
-    await expect(page.getByTestId('order-number')).toHaveText(ORDER_NUMBER);
+    // Номер ищем внутри модалки, а не по всей странице
+    await expect(modal.getByTestId('order-number')).toHaveText(ORDER_NUMBER);
 
     // Закрываем модалку
-    await page.getByTestId('modal-close').click();
+    await modal.getByTestId('modal-close').click();
     await expect(modal).not.toBeVisible();
 
     // Проверяем, что конструктор пуст
-    await expect(constructor.getByText('Выберите булки').first()).toBeVisible();
-    await expect(constructor.getByText('Выберите начинку')).toBeVisible();
+    await expect(
+      constructorSection.getByText('Выберите булки').first()
+    ).toBeVisible();
+    await expect(
+      constructorSection.getByText('Выберите начинку')
+    ).toBeVisible();
   });
 });
